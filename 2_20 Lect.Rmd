@@ -1,0 +1,91 @@
+---
+title: "2_20 Lect"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#2_20 Bimm 143 Lect
+
+##Genome Sequencing: Analyzing Asthma-Related SNPs
+
+Search for data on omim.org. We used SNPs found by Verlaan et al. 2009
+There are a couple SNPs connected to asthma according to the study. The location of the SNP we are analyzing is rs806737
+Import the data table for SNPs found in subjects with Mexican ancestry in LA
+```{r}
+library(readr)
+asthSNP <- read_csv("~/Downloads/373531-SampleGenotypes-Homo_sapiens_Variation_Sample_rs8067378.csv")
+View(asthSNP)
+```
+
+Lets look at Genotype proportions
+```{r}
+
+table(asthSNP[,2])/nrow(asthSNP)
+```
+
+Now let's look at a specific sampled individual: HG00109
+Search for him on the Ensemble entry and download his raw RNA sequences in .fastq format.
+One is forward, one is reverse sequencing. Upload these files to Galaxy.
+Now to interpret in Rstudio...
+
+##Fastq quality score translation
+```{r}
+library(seqinr)
+library(gtools)
+phred <- asc(s2c("CCCFFFFFHHHGHJJJJIJIJJJJGGBHIIIJJJJJIIDGHGGGGCGG@")) - 33
+phred
+```
+
+##Data TopHat analysis and visualization
+Use the TopHat tool to analyze fastqsanger files. (if you imported in fastq you can click the pencil icon to convert to fastqsanger)
+This takes a while...
+
+##Covert data to SAM/BAM files
+Use BAM-to-SAM to convert TopHat analysis files
+Note: BAM is just SAM file in binary, smaller file size; can convert easily between SAM/BAM
+Instructions on how to convert raw file data: https://bioboot.github.io/bimm143_W18/class-material/lecture13-BIMM143_W18-lab.pdf
+SAM file documentation: 
+https://bioboot.github.io/bimm143_W18//class-material/sam_format/
+
+##Analysis with population sample
+We ran analysis on one sample file. Here is the final data for a population sample of 230:
+https://bioboot.github.io/bimm143_W18/class-material/
+rs8067378_ENSG00000172057.6.txt
+
+###Genotype proportions
+```{r}
+table(expr[,"geno"])
+table(expr[,"geno"])/nrow(expr)
+```
+
+
+
+```{r}
+## Load expresion data from a file or from online
+#expr <- read.table("rs8067378_ENSG00000172057.6.txt")
+url <- "https://bioboot.github.io/bggn213_f17/class-material/rs8067378_ENSG00000172057.6.txt"
+expr <- read.table(url)
+
+# Check the genotype sample size and overal summary stats 
+summary(expr)
+
+## Lets break it down to the three genotypes
+summary( expr[expr[,2] == "A/A",3] )
+summary( expr[expr[,2] == "G/G",3] )
+summary( expr[expr[,2] == "A/G",3] )
+
+
+# Generate a boxplot for expression data of different genotype groups
+p <- boxplot(exp~geno, data=expr, xlab="rs8067378 genotype", ylab="ENSG00000172057.4 (RPKM)", notch=T)
+
+## Look at the output 'p' and you will see the median values etc. used to generate the plot
+
+## Histogram of the exp column with ggplot2
+library(ggplot2)
+ggplot(expr, aes(exp, fill = geno)) + geom_density(alpha = 0.2)
+
+```
+
